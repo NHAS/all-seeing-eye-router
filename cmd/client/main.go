@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -13,6 +15,10 @@ import (
 )
 
 func main() {
+
+	addr := flag.String("address", "localhost:3232", "Client connection address")
+
+	flag.Parse()
 
 	privateBytes, err := ioutil.ReadFile("id_ed25519")
 	if err != nil {
@@ -37,17 +43,17 @@ func main() {
 			return nil
 		},
 	}
-	addr := "10.0.0.1:3232"
 
-	log.Println("Connecting to ", addr)
-	conn, err := net.DialTimeout("tcp", addr, config.Timeout)
+	fmt.Printf("Connecting to %s....", *addr)
+	conn, err := net.DialTimeout("tcp", *addr, config.Timeout)
 	if err != nil {
 		log.Fatalf("Unable to connect TCP: %s\n", err)
 
 	}
 	defer conn.Close()
+	fmt.Printf("Success!\n")
 
-	sshConn, chans, reqs, err := ssh.NewClientConn(conn, addr, config)
+	sshConn, chans, reqs, err := ssh.NewClientConn(conn, *addr, config)
 	if err != nil {
 		log.Fatalf("Unable to start a new client connection: %s\n", err)
 	}

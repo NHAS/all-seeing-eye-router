@@ -11,6 +11,24 @@ E.g
 
 If a device suddenly goes from "Failed" resolution to "Reachable" then that notification is passed to the client via golang RPC. 
 
+## Instructions
+
+Building:
+```
+mkdir bin
+go build -o bin ./...
+```
+
+
+Generate server/client keys
+```
+ssh-keygen -t ed25519 -f ./id_ed25519
+```
+
+Start the server and then connect to it with the client. 
+```
+./client --address 10.0.0.1:3232
+```
 
 ## Features
 
