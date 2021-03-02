@@ -125,10 +125,10 @@ func DeviceWatcher(rpcClients <-chan *rpc.Client) {
 					//If we move from a FAILED or INCOMPLETE to a state that is neither FAILED or INCOMPLETE then send a liveness notification
 					failedToLive := (previousState.NeighborState.State&unix.NUD_FAILED != 0 || previousState.NeighborState.State&unix.NUD_INCOMPLETE != 0) && v.State&(unix.NUD_FAILED|unix.NUD_INCOMPLETE) == 0
 					//If a stale state changed from being stale after not having an event for awhile
-					oldStaleToElse := (previousState.NeighborState.State&unix.NUD_STALE != 0 && v.State&unix.NUD_STALE == 0 && previousState.Occured.Before(time.Now().Add(-10*time.Minute)))
+					oldStaleToElse := (previousState.NeighborState.State&unix.NUD_STALE != 0 && v.State&unix.NUD_STALE == 0)
 
-					fmt.Printf("%s\t|\t%t\t|\t%s->%s\n", v.Ip, (!ok || failedToLive || oldStaleToElse), global.GetState(previousState.NeighborState.State), global.GetState(v.State))
-					if !ok || failedToLive || oldStaleToElse {
+					fmt.Printf("%-11.8s|\t%s\t|\t%t\t|\t%s->%s\n", previousState.Occured.Format("15:04:05"), v.Ip, (!ok || (failedToLive || oldStaleToElse) && previousState.Occured.Before(time.Now().Add(-10*time.Minute))), global.GetState(previousState.NeighborState.State), global.GetState(v.State))
+					if !ok || (failedToLive || oldStaleToElse) && previousState.Occured.Before(time.Now().Add(-10*time.Minute)) {
 						changes = append(changes, nv)
 					}
 				}
@@ -144,6 +144,7 @@ func DeviceWatcher(rpcClients <-chan *rpc.Client) {
 				failed := false
 				for ii := range changes {
 					if observers[i].Call("Notification.Do", changes[ii].NeighborState, nil) != nil {
+						observers[i].Close()
 						failed = true
 						break
 					}
